@@ -240,7 +240,7 @@ def evaluate(config,
         ]))
 
   ood_loaders = []
-  ood_names = ['SVHN', 'CIFAR100', 'LSUN', 'ImageNet' ]
+  ood_names = ['SVHN', 'CIFAR100']
 
   ood_set = torchvision.datasets.SVHN('~/data', split='test', download=True, transform=torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
@@ -251,14 +251,6 @@ def evaluate(config,
   ood_set = torchvision.datasets.CIFAR100('~/data', train=False, download=True, transform=torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
         ]))
-  ood_loader = DataLoader(ood_set, shuffle=True, batch_size=config.training.batch_size)
-  ood_loaders.append(ood_loader)
-
-  ood_set = torchvision.datasets.ImageFolder('~/data/LSUN_resize', transform=torchvision.transforms.ToTensor())
-  ood_loader = DataLoader(ood_set, shuffle=True, batch_size=config.training.batch_size)
-  ood_loaders.append(ood_loader)
-
-  ood_set = torchvision.datasets.ImageFolder('~/data/Imagenet_resize', transform=torchvision.transforms.ToTensor())
   ood_loader = DataLoader(ood_set, shuffle=True, batch_size=config.training.batch_size)
   ood_loaders.append(ood_loader)
 
