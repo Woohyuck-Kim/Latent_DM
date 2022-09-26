@@ -4,18 +4,6 @@ import torch
 import numpy as np
 import torchvision
 
-train_feature = torch.load('train_feature.pt', map_location=torch.device("cpu")).cuda()
-
-def KNN_OOD(feature_batch, samples_tensor=train_feature, KNN_k=5):
-
-  cos_dist = 1.0 - torch.inner(torch.nn.functional.normalize(samples_tensor),
-                               torch.nn.functional.normalize(feature_batch))
-
-  cos_dist, _ = torch.sort(cos_dist)
-  knn_dist = torch.mean(cos_dist[:KNN_k, :], dim=0)
-
-  return knn_dist
-
 class SDE(abc.ABC):
   """SDE abstract class. Functions are designed for a mini-batch of inputs."""
 
@@ -104,15 +92,11 @@ class SDE(abc.ABC):
 
       def sde(self, x, t, scale, train_feature):
         """Create the drift and diffusion functions for the reverse SDE/ODE."""
-        with torch.enable_grad():
-          size = x.shape[0]
-          x.requires_grad_()
-          torch.mean((KNN_OOD(x.squeeze(dim=1).squeeze(dim=-1)).unsqueeze(dim=1).unsqueeze(dim=-1))).requires_grad_().backward()
-          drift, diffusion = sde_fn(x, t)
-          score = score_fn(x, t)
-          drift = drift - diffusion[:, None, None, None] ** 2 * (score + float(scale) *float(size) * x.grad) * (0.5 if self.probability_flow else 1.)
-          # Set the diffusion function to zero for ODEs.
-          diffusion = 0. if self.probability_flow else diffusion
+        drift, diffusion = sde_fn(x, t)
+        score = score_fn(x, t)
+        drift = drift - diffusion[:, None, None, None] ** 2 * score * (0.5 if self.probability_flow else 1.)
+        # Set the diffusion function to zero for ODEs.
+        diffusion = 0. if self.probability_flow else diffusion
         return drift, diffusion
 
       def discretize(self, x, t):
